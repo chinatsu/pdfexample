@@ -44,13 +44,6 @@ dependencies {
     implementation("org.verapdf:validation-model:$verapdfVersion")
     implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:$openHtmlToPdfVersion")
     implementation("com.openhtmltopdf:openhtmltopdf-slf4j:$openHtmlToPdfVersion")
-
-
-    // Use the Kotlin test library.
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-
-    // Use the Kotlin JUnit integration.
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit")
 }
 
 application {

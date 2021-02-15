@@ -37,19 +37,17 @@ import kotlin.streams.toList
 
 typealias Document = Pair<String, String>
 
-val fontsRoot: Path = Paths.get("fonts/")
-val documentsRoot: Path = Paths.get("documents/")
+val fontPath: Path = Paths.get("fonts/")
+val docPath: Path = Paths.get("documents/")
 
-val objectMapper: ObjectMapper = ObjectMapper()
+val fonts: List<FontMetadata> = ObjectMapper()
     .registerKotlinModule()
-
-val fonts: List<FontMetadata> = objectMapper.readValue(Files.newInputStream(fontsRoot.resolve("config.json")))
+    .readValue(Files.newInputStream(fontPath.resolve("config.json")))
 val colorProfile: ByteArray = IOUtils.toByteArray(PDDocument::class.java.getResourceAsStream("/sRGB2014.icc"))
 
 
 fun main() {
-    VeraGreenfieldFoundryProvider.initialise()
-    Files.list(documentsRoot)
+    Files.list(docPath)
         .map { it.fileName.toString().split('.').first() to Files.readAllBytes(it).toString(Charsets.UTF_8) }
         .toList()
         .forEach(Document::makePdf)
@@ -60,8 +58,7 @@ fun Document.makePdf() {
     val doc = this.second
     println("\nCreating PDF from $name.html")
     val outputStream = ByteArrayOutputStream()
-
-    val renderer = PdfRendererBuilder()
+    PdfRendererBuilder()
         .apply {
             for (font in fonts) {
                 useFont({ ByteArrayInputStream(font.bytes) }, font.family, font.weight, font.style, font.subset)
@@ -70,68 +67,18 @@ fun Document.makePdf() {
         .usePdfAConformance(PdfRendererBuilder.PdfAConformance.PDFA_2_U)
         .useColorProfile(colorProfile)
         .withHtmlContent(doc, null)
-        .buildPdfRenderer()
-
-    renderer.createPDFWithoutClosing()
-    //renderer.pdfDocument.conform()
-    renderer.pdfDocument.save(outputStream)
-    renderer.pdfDocument.close()
-
+        .toStream(outputStream)
+        .run()
     val pdf = outputStream.toByteArray()
-
-    println("PDF/A-2U compliant: ${verifyCompliance(pdf)}")
-
+    println("PDF/A-2U compliant: ${pdf.verifyCompliance()}")
     File("$name.pdf").writeBytes(pdf)
 }
 
-
-fun PDDocument.conform() {
-    val xmp = XMPMetadata.createXMPMetadata()
-    val catalog = this.documentCatalog
-    val cal = Calendar.getInstance()
-    val page = PDPage(PDRectangle.A4)
-
-    try {
-        val dc = xmp.createAndAddDublinCoreSchema()
-        dc.addCreator("pdfgen")
-        dc.addDate(cal)
-
-        val id = xmp.createAndAddPFAIdentificationSchema()
-        id.part = 2
-        id.conformance = "U"
-
-        val serializer = XmpSerializer()
-        val baos = ByteArrayOutputStream()
-        serializer.serialize(xmp, baos, true)
-
-        val metadata = PDMetadata(this)
-        metadata.importXMPMetadata(baos.toByteArray())
-        catalog.metadata = metadata
-    } catch (e: BadFieldValueException) {
-        throw IllegalArgumentException(e)
-    }
-
-    val intent = PDOutputIntent(this, colorProfile.inputStream())
-    intent.info = "sRGB IEC61966-2.1"
-    intent.outputCondition = "sRGB IEC61966-2.1"
-    intent.outputConditionIdentifier = "sRGB IEC61966-2.1"
-    intent.registryName = "http://www.color.org"
-    catalog.addOutputIntent(intent)
-    catalog.language = "en-US"
-
-    val pdViewer = PDViewerPreferences(page.cosObject)
-    pdViewer.setDisplayDocTitle(true)
-    catalog.viewerPreferences = pdViewer
-
-    catalog.markInfo = PDMarkInfo(page.cosObject)
-    catalog.structureTreeRoot = PDStructureTreeRoot()
-    catalog.markInfo.isMarked = true
-}
-
-fun verifyCompliance(input: ByteArray, flavour: PDFAFlavour = PDFAFlavour.PDFA_2_U): Boolean {
-    val pdf = ByteArrayInputStream(input)
+fun ByteArray.verifyCompliance(flavour: PDFAFlavour = PDFAFlavour.PDFA_2_U): Boolean {
+    VeraGreenfieldFoundryProvider.initialise()
     val validator = Foundries.defaultInstance().createValidator(flavour, false)
-    val result = Foundries.defaultInstance().createParser(pdf).use { validator.validate(it) }
+    val result = Foundries.defaultInstance().createParser(ByteArrayInputStream(this))
+        .use { validator.validate(it) }
     val failures = result.testAssertions
         .filter { it.status != TestAssertion.Status.PASSED }
     failures.forEach { test ->
@@ -150,5 +97,5 @@ data class FontMetadata(
     val style: BaseRendererBuilder.FontStyle,
     val subset: Boolean
 ) {
-    val bytes: ByteArray = Files.readAllBytes(fontsRoot.resolve(path))
+    val bytes: ByteArray = Files.readAllBytes(fontPath.resolve(path))
 }
