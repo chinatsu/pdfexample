@@ -44,6 +44,8 @@ dependencies {
     implementation("org.verapdf:validation-model:$verapdfVersion")
     implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:$openHtmlToPdfVersion")
     implementation("com.openhtmltopdf:openhtmltopdf-slf4j:$openHtmlToPdfVersion")
+    // implementation("com.openhtmltopdf:openhtmltopdf-svg-support:$openHtmlToPdfVersion") // uncomment to fail pdf/a-2u checks
+
 }
 
 application {

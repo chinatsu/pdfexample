@@ -10,16 +10,6 @@ import com.openhtmltopdf.outputdevice.helper.BaseRendererBuilder
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder
 import org.apache.pdfbox.io.IOUtils
 import org.apache.pdfbox.pdmodel.PDDocument
-import org.apache.pdfbox.pdmodel.PDPage
-import org.apache.pdfbox.pdmodel.common.PDMetadata
-import org.apache.pdfbox.pdmodel.common.PDRectangle
-import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDMarkInfo
-import org.apache.pdfbox.pdmodel.documentinterchange.logicalstructure.PDStructureTreeRoot
-import org.apache.pdfbox.pdmodel.graphics.color.PDOutputIntent
-import org.apache.pdfbox.pdmodel.interactive.viewerpreferences.PDViewerPreferences
-import org.apache.xmpbox.XMPMetadata
-import org.apache.xmpbox.type.BadFieldValueException
-import org.apache.xmpbox.xml.XmpSerializer
 import org.verapdf.pdfa.Foundries
 import org.verapdf.pdfa.VeraGreenfieldFoundryProvider
 import org.verapdf.pdfa.flavours.PDFAFlavour
@@ -27,12 +17,9 @@ import org.verapdf.pdfa.results.TestAssertion
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.InputStream
-import java.lang.IllegalArgumentException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import kotlin.streams.toList
 
 typealias Document = Pair<String, String>
